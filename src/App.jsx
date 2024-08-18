@@ -1,35 +1,111 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import ErrorMessage from "./components/ErrorMessage/ErrorMessage";
+import SearchBar from "./components/SearchBar/SearchBar";
+import Loader from "./components/Loader/Loader";
+import LoadMoreBtn from "./components/LoadMoreBtn/LoadMoreBtn";
+import ImageGallery from "./components/ImageGallery/ImageGallery";
+import ImageModal from "./components/ImageModal/ImageModal";
+import toast from "react-hot-toast";
+import getImages from "./api";
+
+import { useState, useEffect, useRef } from "react";
+
+import "./App.css";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const MODAL_STATE = {
+    modalIsOpen: false,
+    srcUrl: "",
+    altDescription: "",
+    authorName: "",
+    likes: "",
+    largeDescription: "",
+  };
+
+  const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [images, setImages] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
+  const [showLoadMoreBtn, setShowLoadMoreBtn] = useState(false);
+  const [modalState, setModalState] = useState(MODAL_STATE);
+  const mainElem = useRef();
+
+  const handleSearch = (newQuery) => {
+    setQuery(newQuery);
+    setPage(1);
+    setImages([]);
+  };
+
+  const handleLoadMoreBtn = () => {
+    setPage(page + 1);
+  };
+
+  const handleModalOpen = (
+    srcUrl,
+    altDescription,
+    authorName,
+    likes,
+    largeDescription
+  ) => {
+    setModalState({
+      modalIsOpen: true,
+      srcUrl,
+      altDescription,
+      authorName,
+      likes,
+      largeDescription,
+    });
+  };
+
+  const handleModalClose = () => {
+    setModalState(MODAL_STATE);
+  };
+
+  useEffect(() => {
+    async function getImagesData() {
+      try {
+        setError(false);
+        if (query === "") {
+          setShowLoadMoreBtn(false);
+          return;
+        }
+        setLoading(true);
+        const data = await getImages(query, page);
+        if (data.total === 0) {
+          setShowLoadMoreBtn(false);
+          toast("There are no results!");
+          return;
+        }
+        setImages((prevImages) => [...prevImages, ...data.results]);
+        setShowLoadMoreBtn(data.total_pages !== page);
+      } catch (error) {
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
+    }
+    getImagesData();
+  }, [query, page]);
+
+  useEffect(() => {
+    if (page === 1) return;
+    mainElem.current.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [images, page]);
 
   return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <div ref={mainElem}>
+      <SearchBar onSearch={handleSearch} />
+      {error && <ErrorMessage />}
+      {images.length > 0 && (
+        <ImageGallery images={images} onImageClick={handleModalOpen} />
+      )}
+      {showLoadMoreBtn && !loading && (
+        <LoadMoreBtn onLoadMoreBtn={handleLoadMoreBtn} />
+      )}
+      {loading && <Loader />}
+      <ImageModal onModalClose={handleModalClose} modalState={modalState} />
+    </div>
+  );
 }
 
-export default App
+export default App;

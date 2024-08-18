@@ -1,0 +1,18 @@
+.loadMoreBtn {
+  display: block;
+  color: black;
+  font-size: 16px;
+  background-color: cyan;
+  transition: background-color 200ms linear;
+  outline: transparent;
+  border: 1px solid #181938;
+  border-radius: 6px;
+  padding: 8px 16px;
+  margin: 0 auto;
+}
+
+.loadMoreBtn:hover,
+.loadMoreBtn:focus-visible,
+.loadMoreBtn:active {
+  background-color: orange;
+}
