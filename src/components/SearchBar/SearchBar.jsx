@@ -8,7 +8,7 @@ const SearchBar = ({ onSearch }) => {
     const form = event.currentTarget;
     const query = form.elements.searchInput.value.trim();
     if (query === "") {
-      toast.error("Please set search query.");
+      toast.error("Please you need to enter text to search for an image.");
     }
     onSearch(query);
     form.reset();
